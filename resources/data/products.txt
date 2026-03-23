@@ -1,0 +1,6 @@
+P1001,Laptop,Electronics,999.99,10,High performance laptop
+P1002,Smartphone,Electronics,699.5,20,Latest model smartphone
+P1003,Headphones,Audio,149.99,50,Noise cancelling headphones
+P1004,Coffee Maker,Home,89.99,15,Programmable coffee maker
+P1005,Running Shoes,Sports,75.0,30,Comfortable running shoes
+P1005,harddrive,storage device,2500.0,10,storing devices 8gb
