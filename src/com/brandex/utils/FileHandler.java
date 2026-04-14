@@ -10,6 +10,8 @@ import com.brandex.services.ProductService;
  * This class handles all our file stuff.
  * Requirement (a): passwords and user data are stored in a PASSWORD FILE.
  * Requirement (d): order data is saved to a text file for persistence.
+ * AI Assistance (Gemini CLI): Helped verify file persistence logic 
+ * and fixed loadOrders loading errors.
  */
 public class FileHandler {
 

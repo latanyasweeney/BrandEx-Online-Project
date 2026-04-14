@@ -142,10 +142,8 @@ public class AdminDashboard extends JPanel {
             refresh.run();
         });
 
-        // Use a timer to refresh the order queue periodically for real-time feel if needed, 
-        // but since it's the same JVM instance, createOrder in Customer dashboard 
-        // should update the same orderService object.
-        // For actual "real-time" we should call refresh when the tab is selected.
+        // AI Assistance (Gemini CLI): Added this listener to refresh the queue 
+        // in real-time when the Admin switches to the "Order Queue" tab.
         tabbedPane.addChangeListener(e -> {
             if (tabbedPane.getSelectedIndex() == 1) { // Order Queue tab
                 refresh.run();

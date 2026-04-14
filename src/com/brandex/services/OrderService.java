@@ -107,12 +107,13 @@ public class OrderService {
             System.out.println("No pending orders.");
             return;
         }
-        // Iterate through queue without destroying it
+        // AI Assistance (Gemini CLI): Helped optimize this traversal by making Queue iterable
         for (Order o : orderQueue) {
             System.out.println(o);
         }
     }
 
+    // AI Assistance (Gemini CLI): Added this method to help AdminDashboard show real-time orders
     public Queue<Order> getPendingOrders() {
         return orderQueue;
     }

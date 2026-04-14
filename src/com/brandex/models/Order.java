@@ -43,6 +43,8 @@ public class Order {
         this.status = status;
     }
 
+    // AI Assistance (Gemini CLI): Added this setter to fix a "method undefined" 
+    // error in FileHandler when loading orders from the text file.
     public void setTotalAmount(double totalAmount) {
         this.totalAmount = totalAmount;
     }
