@@ -11,33 +11,35 @@ import com.brandex.utils.FileHandler;
  */
 public class ProductService {
     private BinarySearchTree<Product> productBST;
-    private LinkedList<Product> productList; // Keep a list for easy iteration too
+    private LinkedList<Product> productList;
 
     public ProductService() {
-        this.productList = FileHandler.loadProducts();
+        this.productList = new LinkedList<>();
         this.productBST = new BinarySearchTree<>();
-        
-        // Populate BST
-        for (Product p : productList) {
-            productBST.insert(p);
-        }
+        loadProductsFromFile();
     }
 
-    public void addProduct(String name, String category, double price, int stock, String description) {
-        String id = "P" + (1000 + productList.size());
-        Product newProduct = new Product(id, name, category, price, stock, description);
-        
-        productList.add(newProduct);
-        productBST.insert(newProduct);
+    public void addProduct(Product p) {
+        productList.add(p);
+        productBST.insert(p);
         FileHandler.saveProducts(productList);
-        System.out.println("Product added: " + id);
     }
     
-    public boolean removeProduct(String id) {
-        Product p = searchById(id);
-        if (p != null) {
-            productBST.delete(p);
-            productList.remove(p);
+    public boolean removeProduct(String productId) {
+        Product dummy = new Product(productId, "", "", 0, 0, "");
+        Product found = productBST.search(dummy);
+        if (found != null) {
+            productBST.delete(found);
+            // We need to remove from productList too. 
+            // LinkedList.remove(T data) needs to be correctly implemented or we use index.
+            int index = 0;
+            for (Product p : productList) {
+                if (p.getProductId().equals(productId)) {
+                    productList.remove(index);
+                    break;
+                }
+                index++;
+            }
             FileHandler.saveProducts(productList);
             return true;
         }
@@ -45,36 +47,44 @@ public class ProductService {
     }
 
     public Product searchById(String id) {
-        // Create dummy product for search
+        // 1. Try BST search first (for speed)
         Product searchKey = new Product(id, "", "", 0, 0, "");
-        return productBST.search(searchKey);
-    }
-
-    public void searchByName(String partialName) {
-        System.out.println("Search Results for '" + partialName + "':");
-        // Use in-order traversal to get all products sorted by ID
-        // Note: For true name search, iterating the list is O(n) which is fine.
-        // But requirement asks to use in-order traversal logic.
+        Product p = productBST.search(searchKey);
         
-        ArrayList<Product> allProducts = productBST.toList(); // Get sorted list from BST
-        boolean found = false;
-        
-        for (Product p : allProducts) {
-            if (p.getName().toLowerCase().contains(partialName.toLowerCase())) {
-                System.out.println(p);
-                found = true;
+        // 2. Fallback: Search the LinkedList if BST fails
+        if (p == null) {
+            for (Product item : productList) {
+                if (item.getProductId().equals(id)) {
+                    return item;
+                }
             }
         }
-        
-        if (!found) {
-            System.out.println("No products found.");
+        return p;
+    }
+
+    public ArrayList<Product> searchByName(String name) {
+        ArrayList<Product> results = new ArrayList<>();
+        ArrayList<Product> all = productBST.toList();
+        for (Product p : all) {
+            if (p.getName().toLowerCase().contains(name.toLowerCase())) {
+                results.add(p);
+            }
         }
+        return results;
     }
 
     public LinkedList<Product> getAllProducts() {
         return productList;
     }
     
+    public void loadProductsFromFile() {
+        this.productList = FileHandler.loadProducts();
+        this.productBST = new BinarySearchTree<>();
+        for (Product p : productList) {
+            productBST.insert(p);
+        }
+    }
+
     public BinarySearchTree<Product> getBST() {
         return productBST;
     }

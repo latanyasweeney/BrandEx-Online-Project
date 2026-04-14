@@ -1,0 +1,6 @@
+P-1|thumdrive|Storage|2000.0|5|USB 
+P-2|Wireless Mouse|Peripherals|25.99|46|Ergonomic 2.4GHz wireless mouse with silent clicks.
+P-3|Gaming Keyboard|Peripherals|79.5|26|RGB mechanical keyboard with anti-ghosting.
+P-4|1TB External SSD|Storage|129.99|20|USB 3.2 portable SSD, read speeds up to 1050MB/s.
+P-5| 27" 4K Monitor|Displays|349.0|149|UHD IPS panel, 95% DCI-P3, HDMI/DP ports.
+P-6|Noise Cancelling Headphones| Audio|199.99|47|Bluetooth 5.0, 30hr battery life, hybrid ANC.

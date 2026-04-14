@@ -1,84 +1,68 @@
 package com.brandex.utils;
 
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.Random;
-
-import com.brandex.datastructures.LinkedList;
-
 /**
- * Utilities for password hashing and validation.
+ * Requirement (e): Security & Data Integrity
+ * This utility class helps with keeping passwords safe.
+ * The project says "NO CLEAR TEXT PASSWORD SHOULD BE STORED".
+ * So we use SHA-256 hashing to scramble the passwords.
  */
 public class PasswordUtils {
 
-    // Hash a password using SHA-256
-    public static String hashPassword(String password) {
+    // Requirement (e): "ONLY THE HASED OF THE PASSWORD"
+    // This method takes a normal password and turns it into a long string of hex characters
+    public static String hashPassword(String plain) {
         try {
-            MessageDigest md = MessageDigest.getInstance("SHA-256");
-            byte[] hash = md.digest(password.getBytes());
-            StringBuilder hexString = new StringBuilder();
+            // SHA-256 is a strong way to hash passwords
+            java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+            byte[] hash = digest.digest(plain.getBytes(java.nio.charset.StandardCharsets.UTF_8));
             
-            // Convert byte array to hex string
+            // convert the byte array to hex format
+            StringBuilder hexStr = new StringBuilder();
             for (byte b : hash) {
                 String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) hexString.append('0');
-                hexString.append(hex);
+                if (hex.length() == 1) hexStr.append('0');
+                hexStr.append(hex);
             }
-            return hexString.toString();
-        } catch (NoSuchAlgorithmException e) {
-            throw new RuntimeException("Error hashing password", e);
+            return hexStr.toString();
+        } catch (java.security.NoSuchAlgorithmException e) {
+            // if for some reason SHA-256 isn't available
+            return null;
         }
     }
 
-    // Verify password match
-    public static boolean verifyPassword(String inputPassword, String storedHash) {
-        String inputHash = hashPassword(inputPassword);
-        return inputHash.equals(storedHash);
+    // Checking if a typed password matches the hash we have in the file
+    public static boolean verifyPassword(String plain, String hash) {
+        String hashedPlain = hashPassword(plain);
+        return hashedPlain != null && hashedPlain.equals(hash);
     }
 
-    // Check if password has been used recently (last 2)
-    public static boolean isPasswordInHistory(LinkedList<String> history, String newPassword) {
-        String newHash = hashPassword(newPassword);
-        for (String oldHash : history) {
-            if (oldHash.equals(newHash)) {
-                return true;
-            }
+    // Requirement (e): "system will generate a One Time Password (OTP)"
+    // Generates a random 6-digit code
+    public static String generateOTP() {
+        java.util.Random random = new java.util.Random();
+        return String.format("%06d", random.nextInt(999999));
+    }
+
+    // Requirement (e): "last TWO passwords and no password in the history can be used"
+    // checks if the new password matches anything in the user's history
+    public static boolean isInHistory(String newHash, String[] history) {
+        if (history == null) return false;
+        for (String h : history) {
+            if (h != null && newHash.equals(h)) return true;
         }
         return false;
     }
 
-    // Generate a 6-digit OTP
-    public static String generateOTP() {
-        Random random = new Random();
-        int otp = 100000 + random.nextInt(900000);
-        return String.valueOf(otp);
-    }
-    
-    // Generate a temporary password
-    public static String generateTempPassword() {
-        String chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789!@#";
-        StringBuilder sb = new StringBuilder();
-        Random random = new Random();
-        for (int i = 0; i < 8; i++) {
-            sb.append(chars.charAt(random.nextInt(chars.length())));
-        }
-        return sb.toString();
-    }
-
-    // Check password strength requirements
-    // Min 6 chars, 1 upper, 1 lower, 1 digit
-    public static boolean isValidPassword(String password) {
-        if (password.length() < 6) return false;
-        boolean hasUpper = false;
-        boolean hasLower = false;
-        boolean hasDigit = false;
+    // Basic check to stop people from typing weird characters into the fields
+    public static boolean validateInput(String input) {
+        if (input == null || input.trim().isEmpty()) return false;
         
-        for (char c : password.toCharArray()) {
-            if (Character.isUpperCase(c)) hasUpper = true;
-            else if (Character.isLowerCase(c)) hasLower = true;
-            else if (Character.isDigit(c)) hasDigit = true;
+        // checking for some symbols that might cause issues
+        String forbidden = "'\";<>";
+        for (char c : forbidden.toCharArray()) {
+            if (input.indexOf(c) != -1) return false;
         }
-        
-        return hasUpper && hasLower && hasDigit;
+        return true;
     }
 }
+

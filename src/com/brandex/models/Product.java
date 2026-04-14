@@ -5,51 +5,38 @@ package com.brandex.models;
  * Implements Comparable so it can be stored in a Binary Search Tree (sorted by ID).
  */
 public class Product implements Comparable<Product> {
-    private String id;
-    private String name;
-    private String category;
+    private String productId, name, category, description;
     private double price;
-    private int stock;
-    private String description;
+    private int stockQuantity;
 
-    public Product(String id, String name, String category, double price, int stock, String description) {
-        this.id = id;
+    public Product(String productId, String name, String category, double price, int stockQuantity, String description) {
+        this.productId = productId;
         this.name = name;
         this.category = category;
         this.price = price;
-        this.stock = stock;
+        this.stockQuantity = stockQuantity;
         this.description = description;
     }
 
-    public String getId() { return id; }
+    public String getProductId() { return productId; }
     public String getName() { return name; }
     public String getCategory() { return category; }
     public double getPrice() { return price; }
-    public int getStock() { return stock; }
+    public int getStockQuantity() { return stockQuantity; }
     public String getDescription() { return description; }
 
-    public void setStock(int stock) {
-        this.stock = stock;
+    public void setStockQuantity(int stockQuantity) {
+        this.stockQuantity = stockQuantity;
     }
 
     @Override
     public int compareTo(Product other) {
-        // Compare string IDs lexicographically
-        return this.id.compareTo(other.id);
+        return this.productId.compareTo(other.productId);
     }
 
     @Override
     public String toString() {
-        return "[" + id + "] " + name + " | " + category + " | $" + String.format("%.2f", price)
-             + " | Stock: " + stock + "\n    " + description;
-    }
-    
-    // Check equality based on ID
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) return true;
-        if (obj == null || getClass() != obj.getClass()) return false;
-        Product other = (Product) obj;
-        return id.equals(other.id);
+        return "[" + productId + "] " + name + " | " + category + " | $" + String.format("%.2f", price)
+             + " | Stock: " + stockQuantity + "\n    " + description;
     }
 }

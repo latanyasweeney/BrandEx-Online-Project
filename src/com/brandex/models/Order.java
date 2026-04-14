@@ -1,7 +1,6 @@
 package com.brandex.models;
 
-import java.util.Date;
-import com.brandex.datastructures.LinkedList;
+import com.brandex.datastructures.ArrayList;
 
 /**
  * Order class represents a completed purchase.
@@ -9,34 +8,47 @@ import com.brandex.datastructures.LinkedList;
 public class Order {
     private String orderId;
     private String customerId;
-    private LinkedList<Product> items;
+    private ArrayList<CartItem> items;
     private double totalAmount;
-    private Date date;
-    private String status; // "PENDING", "PROCESSED"
+    private String orderDate;
+    private String status; // PENDING, PROCESSING, SHIPPED
+    private String shippingAddress;
 
-    public Order(String orderId, String customerId, LinkedList<Product> items, double totalAmount) {
+    public Order(String orderId, String customerId, ArrayList<CartItem> items, String orderDate, String status, String shippingAddress) {
         this.orderId = orderId;
         this.customerId = customerId;
         this.items = items;
-        this.totalAmount = totalAmount;
-        this.date = new Date();
-        this.status = "PENDING";
+        this.orderDate = orderDate;
+        this.status = status;
+        this.shippingAddress = shippingAddress;
+        calculateTotal();
+    }
+
+    public void calculateTotal() {
+        this.totalAmount = 0;
+        for (CartItem item : items) {
+            this.totalAmount += item.getTotalPrice();
+        }
     }
 
     public String getOrderId() { return orderId; }
     public String getCustomerId() { return customerId; }
-    public LinkedList<Product> getItems() { return items; }
+    public ArrayList<CartItem> getItems() { return items; }
     public double getTotalAmount() { return totalAmount; }
-    public Date getDate() { return date; }
+    public String getOrderDate() { return orderDate; }
     public String getStatus() { return status; }
+    public String getShippingAddress() { return shippingAddress; }
 
     public void setStatus(String status) {
         this.status = status;
     }
 
+    public void setTotalAmount(double totalAmount) {
+        this.totalAmount = totalAmount;
+    }
+
     @Override
     public String toString() {
-        // Simplified toString for file storage or display
         return orderId + " | Customer: " + customerId + " | Total: $" + String.format("%.2f", totalAmount) + " | Status: " + status;
     }
 }

@@ -1,65 +1,65 @@
 package com.brandex.datastructures;
 
 /**
- *  Binary Search Tree implementation.
- * Used for fast lookups (O(log n) average case).
- * Elements must implement Comparable interface.
+ * Requirement (b): Product Catalog Search
+ * We are using a Binary Search Tree (BST) here because it makes searching 
+ * for products by ID or Name really fast (O(log n)).
+ * This helps us meet the requirement to "quickly locate products".
  */
 public class BinarySearchTree<T extends Comparable<T>> {
     private TreeNode<T> root;
 
     public BinarySearchTree() {
-        this.root = null;
+        this.root = null; // starting with an empty tree
     }
 
-    // Public insert method
+    // This method lets us add a new item into the BST
     public void insert(T data) {
         root = insertRec(root, data);
     }
 
-    // Recursive insert helper
+    // This is a helper method that uses recursion to find where to put the new data
     private TreeNode<T> insertRec(TreeNode<T> root, T data) {
-        // Base case: If the tree is empty, return a new node
+        // If we found an empty spot, put the new node here
         if (root == null) {
             root = new TreeNode<>(data);
             return root;
         }
 
-        // Otherwise, recur down the tree
+        // If the data is smaller, go left. If it's bigger, go right.
         if (data.compareTo(root.data) < 0) {
             root.left = insertRec(root.left, data);
         } else if (data.compareTo(root.data) > 0) {
             root.right = insertRec(root.right, data);
         }
 
-        // Return the (unchanged) node pointer
         return root;
     }
 
-    // Public search method
+    // This is the search function for requirement (b)
     public T search(T data) {
         TreeNode<T> result = searchRec(root, data);
         if (result != null) {
             return result.data;
         }
-        return null;
+        return null; // nothing found
     }
 
-    // Recursive search helper
+    // Using recursion to search through the tree
     private TreeNode<T> searchRec(TreeNode<T> root, T data) {
-        // Base Cases: root is null or data is present at root
-        if (root == null || root.data.equals(data)) // utilizing equals for precise match if compareTo is 0
+        // If we hit a null or find the data, we're done
+        if (root == null || root.data.equals(data)) 
             return root;
 
-        // Data is smaller than root's data
+        // Smaller? go left.
         if (data.compareTo(root.data) < 0)
             return searchRec(root.left, data);
 
-        // Data is greater than root's data
+        // Bigger? go right.
         return searchRec(root.right, data);
     }
     
-    // Delete method
+    // Method to remove a node from the tree
     public void delete(T data) {
         root = deleteRec(root, data);
     }
@@ -67,26 +67,30 @@ public class BinarySearchTree<T extends Comparable<T>> {
     private TreeNode<T> deleteRec(TreeNode<T> root, T data) {
         if (root == null) return root;
 
+        // standard BST delete logic
         if (data.compareTo(root.data) < 0)
             root.left = deleteRec(root.left, data);
         else if (data.compareTo(root.data) > 0)
-            root.right = deleteRec(root.right, data);
+            root.right = deleteRec(root.right, root.data);
         else {
-            // Node with only one child or no child
+            // Found the node to delete!
+            
+            // Case 1: only one child or none
             if (root.left == null)
                 return root.right;
             else if (root.right == null)
                 return root.left;
 
-            // Node with two children: Get the inorder successor (smallest in the right subtree)
+            // Case 2: two children - need to find the smallest on the right side
             root.data = minValue(root.right);
 
-            // Delete the inorder successor
+            // delete that successor
             root.right = deleteRec(root.right, root.data);
         }
         return root;
     }
 
+    // Helper to find the minimum value in a subtree
     private T minValue(TreeNode<T> root) {
         T minv = root.data;
         while (root.left != null) {
@@ -96,7 +100,7 @@ public class BinarySearchTree<T extends Comparable<T>> {
         return minv;
     }
 
-    // Convert tree to ArrayList using in-order traversal
+    // Turns the tree into a list so we can show it in the UI more easily
     public ArrayList<T> toList() {
         ArrayList<T> list = new ArrayList<>();
         toListRec(root, list);
@@ -105,13 +109,13 @@ public class BinarySearchTree<T extends Comparable<T>> {
 
     private void toListRec(TreeNode<T> root, ArrayList<T> list) {
         if (root != null) {
-            toListRec(root.left, list);
-            list.add(root.data);
-            toListRec(root.right, list);
+            toListRec(root.left, list); // go left
+            list.add(root.data);        // add self
+            toListRec(root.right, list); // go right
         }
     }
 
-    // In-order traversal (Left -> Root -> Right)
+    // prints the tree in order (for debugging)
     public void inOrder() {
         inOrderRec(root);
         System.out.println();
@@ -125,3 +129,4 @@ public class BinarySearchTree<T extends Comparable<T>> {
         }
     }
 }
+

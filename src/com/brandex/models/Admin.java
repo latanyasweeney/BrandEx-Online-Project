@@ -5,12 +5,21 @@ package com.brandex.models;
  */
 public class Admin extends User {
 
-    public Admin(String id, String firstName, String lastName, String email, String password) {
-        super(id, firstName, lastName, email, password);
+    public Admin(String userId, String firstName, String lastName, String email, String passwordHash) {
+        super(userId, firstName, lastName, email, passwordHash);
+    }
+
+    @Override
+    public String getUserType() {
+        return "ADMIN";
     }
 
     @Override
     public String getRole() {
         return "ADMIN";
+    }
+
+    public boolean isRoot() {
+        return getUserId().equals("root");
     }
 }

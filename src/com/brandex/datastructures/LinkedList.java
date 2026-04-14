@@ -4,28 +4,30 @@ import java.util.Iterator;
 import java.util.NoSuchElementException;
 
 /**
- * Custom LinkedList implementation.
- * This is a singly linked list where each node points to the next one.
- * We implement Iterable so we can use for-each loops easily.
+ * Requirement (b): Product Catalog
+ * Requirement (c): Shopping Experience (Cart)
+ * We are using a custom Singly Linked List here to store products 
+ * and cart items. Linked lists are good for "easy insertion/deletion" 
+ * as required in the project description.
  */
 public class LinkedList<T> implements Iterable<T> {
-    private Node<T> head;
-    private int size;
+    private Node<T> head; // the first item in the list
+    private int size;     // keeping track of how many items we have
 
     public LinkedList() {
-        this.head = null;
+        this.head = null; // start empty
         this.size = 0;
     }
 
-    // Add element to the end of the list - O(n)
+    // This adds a new item to the very end of the list
     public void add(T data) {
         Node<T> newNode = new Node<>(data);
         
-        // If list is empty, new node becomes head
+        // If the list is empty, this new node is now the head
         if (head == null) {
             head = newNode;
         } else {
-            // Traverse to the end
+            // Otherwise we walk to the end and attach it
             Node<T> current = head;
             while (current.next != null) {
                 current = current.next;
@@ -35,19 +37,19 @@ public class LinkedList<T> implements Iterable<T> {
         size++;
     }
     
-    // Add element to the beginning - O(1)
+    // Quick way to add to the front (useful for Stacks)
     public void addFirst(T data) {
         Node<T> newNode = new Node<>(data);
-        newNode.next = head;
-        head = newNode;
+        newNode.next = head; // point new node to the old head
+        head = newNode;      // new node is now the start
         size++;
     }
 
-    // Remove first occurrence of data - O(n)
+    // Find and remove a specific piece of data
     public boolean remove(T data) {
         if (head == null) return false;
 
-        // If head holds the data
+        // Special case: the data is in the head
         if (head.data.equals(data)) {
             head = head.next;
             size--;
@@ -57,12 +59,13 @@ public class LinkedList<T> implements Iterable<T> {
         Node<T> current = head;
         Node<T> prev = null;
 
+        // search for the node
         while (current != null && !current.data.equals(data)) {
             prev = current;
             current = current.next;
         }
 
-        // If found
+        // if we found it, skip it in the link chain
         if (current != null) {
             prev.next = current.next;
             size--;
@@ -72,16 +75,41 @@ public class LinkedList<T> implements Iterable<T> {
         return false;
     }
     
-    // Remove from front (for Queue/Stack) - O(1)
+    // Remove based on where it is in the list
+    public boolean remove(int index) {
+        if (index < 0 || index >= size) return false;
+        
+        if (index == 0) {
+            head = head.next;
+            size--;
+            return true;
+        }
+        
+        Node<T> current = head;
+        Node<T> prev = null;
+        for (int i = 0; i < index; i++) {
+            prev = current;
+            current = current.next;
+        }
+        
+        if (current != null) {
+            prev.next = current.next;
+            size--;
+            return true;
+        }
+        return false;
+    }
+    
+    // Remove from the start of the list - O(1)
     public T removeFirst() {
         if (head == null) return null;
         T data = head.data;
-        head = head.next;
+        head = head.next; // second node becomes the new head
         size--;
         return data;
     }
 
-    // Get element at index - O(n)
+    // Get the data at a certain position
     public T get(int index) {
         if (index < 0 || index >= size) {
             throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + size);
@@ -94,23 +122,23 @@ public class LinkedList<T> implements Iterable<T> {
         return current.data;
     }
     
-    // Check if list is empty
+    // is the list empty?
     public boolean isEmpty() {
         return size == 0;
     }
 
-    // Get size
+    // total items
     public int size() {
         return size;
     }
 
-    // Clear the list
+    // clear everything
     public void clear() {
         head = null;
         size = 0;
     }
 
-    // Implementing iterator for for-each loop support
+    // We implement this so we can use the nice 'for (T item : list)' syntax
     @Override
     public Iterator<T> iterator() {
         return new Iterator<T>() {
@@ -131,3 +159,4 @@ public class LinkedList<T> implements Iterable<T> {
         };
     }
 }
+

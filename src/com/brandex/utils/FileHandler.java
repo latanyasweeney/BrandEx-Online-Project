@@ -1,274 +1,189 @@
 package com.brandex.utils;
 
 import java.io.*;
+import java.util.Scanner;
 import com.brandex.models.*;
 import com.brandex.datastructures.*;
+import com.brandex.services.ProductService;
 
 /**
- * Handles all file I/O operations.
- * Reads and writes data to text files in CSV format.
+ * This class handles all our file stuff.
+ * Requirement (a): passwords and user data are stored in a PASSWORD FILE.
+ * Requirement (d): order data is saved to a text file for persistence.
  */
 public class FileHandler {
 
-    private static final String DATA_DIR = "resources/data/";
-    private static final String USERS_FILE = DATA_DIR + "passwords.txt";
+    private static final String DATA_DIR = "data/";
+    private static final String USERS_FILE = DATA_DIR + "passwords.txt"; // Requirement (a): The PASSWORD FILE
     private static final String PRODUCTS_FILE = DATA_DIR + "products.txt";
     private static final String ORDERS_FILE = DATA_DIR + "orders.txt";
 
-    // Ensure data directory exists
+    // Setup the data folder if it's not there
     static {
         File dir = new File(DATA_DIR);
-        if (!dir.exists()) {
-            dir.mkdirs();
-        }
+        if (!dir.exists()) dir.mkdirs();
     }
 
+    // Saving all users to the password file
     public static void saveUsers(LinkedList<User> users) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(USERS_FILE))) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(USERS_FILE))) {
             for (User user : users) {
-                StringBuilder line = new StringBuilder();
-                line.append(user.getId()).append(",")
-                    .append(user.getFirstName()).append(",")
-                    .append(user.getLastName()).append(",")
-                    .append(user.getEmail()).append(",")
-                    .append(user.getPassword()).append(",")
-                    .append(user.getRole()).append(",");
+                StringBuilder sb = new StringBuilder();
+                sb.append(user.getId()).append("|")
+                  .append(user.getFirstName()).append("|")
+                  .append(user.getLastName()).append("|")
+                  .append(user.getEmail()).append("|")
+                  .append(user.getPasswordHash()).append("|"); // Requirement (e): Save the HASHED password
                 
-                // Save password history separated by semicolons
-                LinkedList<String> history = user.getPasswordHistory();
-                StringBuilder historyStr = new StringBuilder();
-                for (String oldPass : history) {
-                    historyStr.append(oldPass).append(";");
-                }
-                line.append(historyStr);
+                String[] history = user.getPasswordHistory();
+                sb.append(history[0]).append("|")
+                  .append(history[1]).append("|")
+                  .append(user.getStatus());
                 
-                writer.write(line.toString());
-                writer.newLine();
+                pw.println(sb.toString());
             }
         } catch (IOException e) {
-            System.out.println("Error saving users: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
+    // Loading users from the file when the app starts
     public static LinkedList<User> loadUsers() {
         LinkedList<User> users = new LinkedList<>();
         File file = new File(USERS_FILE);
         if (!file.exists()) return users;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                String[] parts = line.split(",");
-                // ID,First,Last,Email,Pass,Role,History
-                if (parts.length < 6) continue;
-
-                String id = parts[0];
-                String first = parts[1];
-                String last = parts[2];
-                String email = parts[3];
-                String pass = parts[4];
-                String role = parts[5];
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                String[] parts = line.split("\\|");
+                if (parts.length < 8) continue;
 
                 User user;
-                if (role.equals("ADMIN")) {
-                    user = new Admin(id, first, last, email, pass);
+                // Check if the user is the admin (root)
+                if (parts[0].equals("root")) {
+                    user = new Admin(parts[0], parts[1], parts[2], parts[3], parts[4]);
                 } else {
-                    user = new Customer(id, first, last, email, pass);
+                    user = new Customer(parts[0], parts[1], parts[2], parts[3], parts[4]);
                 }
-
-                // Load history if exists
-                if (parts.length > 6) {
-                    String[] history = parts[6].split(";");
-                    for (String h : history) {
-                        if (!h.isEmpty() && !h.equals(pass)) { 
-                            // Avoid adding current password again as constructor adds it
-                            user.getPasswordHistory().add(h);
-                        }
-                    }
-                }
-                
+                user.getPasswordHistory()[0] = parts[5];
+                user.getPasswordHistory()[1] = parts[6];
+                user.setStatus(parts[7]);
                 users.add(user);
             }
         } catch (IOException e) {
-            System.out.println("Error loading users: " + e.getMessage());
+            e.printStackTrace();
         }
         return users;
     }
 
+    // Saving products to products.txt
     public static void saveProducts(LinkedList<Product> products) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(PRODUCTS_FILE))) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(PRODUCTS_FILE))) {
             for (Product p : products) {
-                writer.write(p.getId() + "," + p.getName() + "," + p.getCategory() + "," + 
-                           p.getPrice() + "," + p.getStock() + "," + p.getDescription());
-                writer.newLine();
+                pw.println(p.getProductId() + "|" + p.getName() + "|" + p.getCategory() + "|" + 
+                           p.getPrice() + "|" + p.getStockQuantity() + "|" + p.getDescription());
             }
         } catch (IOException e) {
-            System.out.println("Error saving products: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
+    // Loading products for the linked list and BST
     public static LinkedList<Product> loadProducts() {
         LinkedList<Product> products = new LinkedList<>();
         File file = new File(PRODUCTS_FILE);
         if (!file.exists()) return products;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                String[] parts = line.split("\\|");
                 if (parts.length < 6) continue;
-
-                // Handle description that might contain commas
-                String description = parts[5];
-                if (parts.length > 6) {
-                    StringBuilder sb = new StringBuilder();
-                    sb.append(parts[5]);
-                    for (int i = 6; i < parts.length; i++) {
-                        sb.append(",").append(parts[i]);
-                    }
-                    description = sb.toString();
-                }
-
-                Product p = new Product(parts[0], parts[1], parts[2], 
-                                      Double.parseDouble(parts[3]), 
-                                      Integer.parseInt(parts[4]), 
-                                      description);
-                products.add(p);
+                products.add(new Product(parts[0], parts[1], parts[2], Double.parseDouble(parts[3]), 
+                                       Integer.parseInt(parts[4]), parts[5]));
             }
         } catch (IOException e) {
-            System.out.println("Error loading products: " + e.getMessage());
+            e.printStackTrace();
         }
         return products;
     }
-    
-    // Save orders (Queue)
-    public static void saveOrders(Queue<Order> orderQueue) {
-        // Since Queue removes items on dequeue, we should just iterate carefully or
-        // assume the service passes us a list representing the queue.
-        // But our Queue doesn't expose iterator nicely? Ah, LinkedList does.
-        // Wait, Queue implementation uses LinkedList internally but doesn't expose it.
-        // However, this is a student project. We can modify Queue to be Iterable 
-        // or just dump the "pending" orders.
-        // Actually, let's just assume we save the persistent list of orders.
-        // But for this project, let's save the queue state.
-        
-        // We can't iterate our custom Queue without popping.
-        // Let's rely on the service to pass a LinkedList of orders to save.
-        // OR better, let's make Queue iterable or accessible.
-        // I'll assume we pass a LinkedList<Order> here for simplicity.
-        // The Service will maintain the history list anyway.
-    }
-    
-    // Overloaded for LinkedList (Order History)
-    public static void saveOrdersList(LinkedList<Order> orders) {
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(ORDERS_FILE))) {
-            for (Order order : orders) {
+
+    // Requirement (d): save orders to handle "high traffic efficiently"
+    public static void saveOrders(Queue<Order> orders) {
+        try (PrintWriter pw = new PrintWriter(new FileWriter(ORDERS_FILE))) {
+            ArrayList<Order> temp = new ArrayList<>();
+            // we dequeue everything to save it, then put it back
+            while (!orders.isEmpty()) {
+                Order o = orders.dequeue();
+                temp.add(o);
+                
                 StringBuilder sb = new StringBuilder();
-                sb.append(order.getOrderId()).append(",")
-                  .append(order.getCustomerId()).append(",")
-                  .append(order.getTotalAmount()).append(",")
-                  .append(order.getStatus()).append(",");
+                sb.append(o.getOrderId()).append("|")
+                  .append(o.getCustomerId()).append("|")
+                  .append(o.getOrderDate()).append("|")
+                  .append(o.getStatus()).append("|")
+                  .append(o.getTotalAmount()).append("|")
+                  .append(o.getShippingAddress()).append("|")
+                  .append(o.getItems().size());
                 
-                // Save product IDs
-                StringBuilder itemsStr = new StringBuilder();
-                for (Product p : order.getItems()) {
-                    itemsStr.append(p.getId()).append(";");
+                // Save each item in the order too
+                for (CartItem item : o.getItems()) {
+                    sb.append("|").append(item.getProduct().getProductId())
+                      .append("|").append(item.getQuantity());
                 }
-                sb.append(itemsStr);
-                
-                writer.write(sb.toString());
-                writer.newLine();
+                pw.println(sb.toString());
+            }
+            // Put orders back into the queue for the Admin to see
+            for (Order o : temp) {
+                orders.enqueue(o);
             }
         } catch (IOException e) {
-            System.out.println("Error saving orders: " + e.getMessage());
+            e.printStackTrace();
         }
     }
 
-    // Load ALL orders (PENDING + PROCESSED) as a LinkedList.
-    // Used by OrderService to rebuild the history list on startup so saves are complete.
-    public static LinkedList<Order> loadAllOrders(BinarySearchTree<Product> productCatalog) {
-        LinkedList<Order> allOrders = new LinkedList<>();
+    // Loading orders back into the Queue
+    public static Queue<Order> loadOrders(ProductService productService) {
+        Queue<Order> orders = new Queue<>();
         File file = new File(ORDERS_FILE);
-        if (!file.exists()) return allOrders;
+        if (!file.exists()) return orders;
 
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (line.trim().isEmpty()) continue;
-                String[] parts = line.split(",");
-                if (parts.length < 5) continue;
-
-                String orderId = parts[0];
-                String custId  = parts[1];
-                double total   = Double.parseDouble(parts[2]);
-                String status  = parts[3];
-
-                LinkedList<Product> items = new LinkedList<>();
-                String[] itemIds = parts[4].split(";");
-                for (String pid : itemIds) {
-                    if (pid.isEmpty()) continue;
-                    Product searchKey = new Product(pid, "", "", 0, 0, "");
-                    Product found = productCatalog.search(searchKey);
-                    if (found != null) items.add(found);
-                }
-
-                Order order = new Order(orderId, custId, items, total);
-                order.setStatus(status);
-                allOrders.add(order);
-            }
-        } catch (IOException e) {
-            System.out.println("Error loading all orders: " + e.getMessage());
-        }
-        return allOrders;
-    }
-
-    // Load orders. Needs product catalog to reconstruct product objects.
-    public static Queue<Order> loadOrders(BinarySearchTree<Product> productCatalog) {
-        Queue<Order> orderQueue = new Queue<>();
-        File file = new File(ORDERS_FILE);
-        if (!file.exists()) return orderQueue;
-
-        try (BufferedReader reader = new BufferedReader(new FileReader(file))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                String[] parts = line.split(",");
-                if (parts.length < 5) continue;
+        try (Scanner scanner = new Scanner(file)) {
+            while (scanner.hasNextLine()) {
+                String line = scanner.nextLine();
+                String[] parts = line.split("\\|");
+                if (parts.length < 7) continue;
 
                 String orderId = parts[0];
                 String custId = parts[1];
-                double total = Double.parseDouble(parts[2]);
+                String date = parts[2];
                 String status = parts[3];
-                
-                LinkedList<Product> items = new LinkedList<>();
-                if (parts.length > 4) {
-                    String[] itemIds = parts[4].split(";");
-                    for (String pid : itemIds) {
-                        // Create dummy product for search key
-                        // The BST search needs a comparable object.
-                        // Our BST search takes T data. 
-                        // Product compares by ID. So we can create a dummy product with just ID.
-                        Product searchKey = new Product(pid, "", "", 0, 0, "");
-                        Product found = productCatalog.search(searchKey);
-                        if (found != null) {
-                            items.add(found);
+                double total = Double.parseDouble(parts[4]);
+                String address = parts[5];
+                int itemCount = Integer.parseInt(parts[6]);
+
+                ArrayList<CartItem> items = new ArrayList<>();
+                int current = 7;
+                for (int i = 0; i < itemCount; i++) {
+                    if (current + 1 < parts.length) {
+                        String pid = parts[current++];
+                        int qty = Integer.parseInt(parts[current++]);
+                        // find the actual product using the BST search logic in productService
+                        Product p = productService.searchById(pid);
+                        if (p != null) {
+                            items.add(new CartItem(p, qty));
                         }
                     }
                 }
-
-                Order order = new Order(orderId, custId, items, total);
-                order.setStatus(status);
-                
-                // Only load pending orders into the active queue?
-                // Or maybe we want to load all?
-                // For a queue, we usually only care about PENDING.
-                if (status.equals("PENDING")) {
-                    orderQueue.enqueue(order);
-                }
+                Order order = new Order(orderId, custId, items, date, status, address);
+                order.setTotalAmount(total); // restore the stored total
+                orders.enqueue(order);
             }
-        } catch (IOException e) {
-            System.out.println("Error loading orders: " + e.getMessage());
+        } catch (IOException | NumberFormatException e) {
+            e.printStackTrace();
         }
-        return orderQueue;
+        return orders;
     }
 }
+

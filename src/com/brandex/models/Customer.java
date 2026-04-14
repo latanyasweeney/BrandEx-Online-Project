@@ -8,23 +8,28 @@ import com.brandex.datastructures.Stack;
  * Adds shopping cart and undo/redo functionality.
  */
 public class Customer extends User {
-    private LinkedList<Product> cart;
-    // Stacks for Undo/Redo actions
-    // We will store "Action" objects or just the Product involved
-    // For simplicity, let's store the Product that was last added/removed
-    private Stack<Product> undoStack; 
-    private Stack<String> actionStack; // "ADD" or "REMOVE"
+    private LinkedList<CartItem> cart;
+    private LinkedList<Order> orderHistory;
+    private Stack<Object[]> undoStack; 
+    private Stack<Object[]> redoStack;
     
-    private Stack<Product> redoProductStack;
-    private Stack<String> redoActionStack;
+    private String otp;
+    private boolean otpUsed;
+    private boolean passwordChanged;
 
-    public Customer(String id, String firstName, String lastName, String email, String password) {
-        super(id, firstName, lastName, email, password);
+    public Customer(String userId, String firstName, String lastName, String email, String passwordHash) {
+        super(userId, firstName, lastName, email, passwordHash);
         this.cart = new LinkedList<>();
+        this.orderHistory = new LinkedList<>();
         this.undoStack = new Stack<>();
-        this.actionStack = new Stack<>();
-        this.redoProductStack = new Stack<>();
-        this.redoActionStack = new Stack<>();
+        this.redoStack = new Stack<>();
+        this.otpUsed = false;
+        this.passwordChanged = false;
+    }
+
+    @Override
+    public String getUserType() {
+        return "CUSTOMER";
     }
 
     @Override
@@ -32,12 +37,15 @@ public class Customer extends User {
         return "CUSTOMER";
     }
 
-    public LinkedList<Product> getCart() {
-        return cart;
-    }
+    public LinkedList<CartItem> getCart() { return cart; }
+    public LinkedList<Order> getOrderHistory() { return orderHistory; }
+    public Stack<Object[]> getUndoStack() { return undoStack; }
+    public Stack<Object[]> getRedoStack() { return redoStack; }
     
-    public Stack<Product> getUndoStack() { return undoStack; }
-    public Stack<String> getActionStack() { return actionStack; }
-    public Stack<Product> getRedoProductStack() { return redoProductStack; }
-    public Stack<String> getRedoActionStack() { return redoActionStack; }
+    public String getOtp() { return otp; }
+    public void setOtp(String otp) { this.otp = otp; }
+    public boolean isOtpUsed() { return otpUsed; }
+    public void setOtpUsed(boolean otpUsed) { this.otpUsed = otpUsed; }
+    public boolean isPasswordChanged() { return passwordChanged; }
+    public void setPasswordChanged(boolean passwordChanged) { this.passwordChanged = passwordChanged; }
 }
